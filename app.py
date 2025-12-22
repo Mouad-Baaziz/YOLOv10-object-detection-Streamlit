@@ -7,69 +7,118 @@ import os
 import numpy as np
 from PIL import Image
 
-# Load YOLOv10 model
+TEXTS = {
+    "en": {
+        "title": "YOLOv10 Object Detection",
+        "subtitle": "Upload an image or video and get object detection results!",
+        "upload": "Choose an image or video",
+        "original_image": "Original Image",
+        "uploaded_image": "Uploaded Image",
+        "detection_results": "Detection Results",
+        "detected_objects": "Detected Objects",
+        "detection_details": "Detection Details",
+        "detected_count": "Detected {} objects:",
+        "confidence": "Confidence",
+        "no_objects": "No objects detected",
+        "processing_video": "Processing Video...",
+        "processing_frame": "Processing frame {}/{}",
+        "processed_frames": "✅ Processed {} frames!",
+        "download_button": "📥 Download Processed Video",
+        "error_video": "❌ Failed to create output video. The file is empty or doesn't exist.",
+        "error_occurred": "An error occurred: {}",
+        "output_path": "Output path: {}",
+        "file_exists": "File exists: {}",
+        "file_size": "File size: {} bytes",
+        "language": "Language"
+    },
+    "fr": {
+        "title": "Détection des Objets YOLOv10",
+        "subtitle": "Téléchargez une image ou une vidéo et obtenez les résultats de détection d'objets !",
+        "upload": "Choisir une image ou une vidéo",
+        "original_image": "Image Originale",
+        "uploaded_image": "Image Téléchargée",
+        "detection_results": "Résultats de Détection",
+        "detected_objects": "Objets Détectés",
+        "detection_details": "Détails de Détection",
+        "detected_count": "{} objets détectés :",
+        "confidence": "Confiance",
+        "no_objects": "Aucun objet détecté",
+        "processing_video": "Traitement de la Vidéo...",
+        "processing_frame": "Traitement de l'image {}/{}",
+        "processed_frames": "✅ {} images traitées !",
+        "download_button": "📥 Télécharger la Vidéo Traitée",
+        "error_video": "❌ Échec de la création de la vidéo de sortie. Le fichier est vide ou n'existe pas.",
+        "error_occurred": "Une erreur s'est produite : {}",
+        "output_path": "Chemin de sortie : {}",
+        "file_exists": "Le fichier existe : {}",
+        "file_size": "Taille du fichier : {} octets",
+        "language": "Langue"
+    }
+}
+
 @st.cache_resource
 def load_model():
     return YOLO("yolov10n.pt")
 
 model = load_model()
 
-st.title("YOLOv10 Object Detection Web App")
-st.write("Upload an image or video and get object detection results!")
+st.sidebar.header("⚙️ Settings / Paramètres")
+language = st.sidebar.radio(
+    "Language / Langue:",
+    options=["en", "fr"],
+    format_func=lambda x: "English" if x == "en" else "Français",
+    horizontal=True
+)
 
-# File uploader
-uploaded_file = st.file_uploader("Choose an image or video", type=["jpg","png","jpeg","mp4","avi"])
+t = TEXTS[language]
+
+st.title(t["title"])
+st.write(t["subtitle"])
+
+uploaded_file = st.file_uploader(t["upload"], type=["jpg","png","jpeg","mp4","avi"])
 
 if uploaded_file is not None:
     file_ext = uploaded_file.name.split('.')[-1].lower()
 
     if file_ext in ["jpg", "png", "jpeg"]:
-        # Read image directly
         image = Image.open(uploaded_file)
         image_np = np.array(image)
         
-        # Display original image
-        st.subheader("Original Image")
-        st.image(image, caption="Uploaded Image", use_container_width=True)
+        st.subheader(t["original_image"])
+        st.image(image, caption=t["uploaded_image"], use_container_width=True)
         
-        # Process image
-        st.subheader("Detection Results")
+        st.subheader(t["detection_results"])
         results = model(image_np)
         
-        # Plot results with bounding boxes
-        result_img = results[0].plot()  # This creates the image with boxes
+        result_img = results[0].plot()  
         
-        # Convert BGR to RGB (OpenCV uses BGR, Streamlit expects RGB)
         result_img_rgb = cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB)
         
-        st.image(result_img_rgb, caption="Detected Objects", use_container_width=True)
+        st.image(result_img_rgb, caption=t["detected_objects"], use_container_width=True)
         
-        # Display detection details
-        st.subheader("Detection Details")
+        st.subheader(t["detection_details"])
         boxes = results[0].boxes
         if len(boxes) > 0:
-            st.write(f"**Detected {len(boxes)} objects:**")
+            st.write(f"**{t['detected_count'].format(len(boxes))}**")
             for i, box in enumerate(boxes):
                 class_id = int(box.cls[0])
                 confidence = float(box.conf[0])
                 class_name = results[0].names[class_id]
-                st.write(f"{i+1}. **{class_name}** - Confidence: {confidence:.2%}")
+                st.write(f"{i+1}. **{class_name}** - {t['confidence']}: {confidence:.2%}")
         else:
-            st.write("No objects detected")
+            st.write(t["no_objects"])
     
     elif file_ext in ["mp4", "avi"]:
-        # Save uploaded file temporarily
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}")
         temp_file.write(uploaded_file.read())
         temp_file.close()
         temp_file_path = temp_file.name
         
         try:
-            st.subheader("Processing Video...")
+            st.subheader(t["processing_video"])
             progress_bar = st.progress(0)
             status_text = st.empty()
             
-            # Open video to get properties
             cap = cv2.VideoCapture(temp_file_path)
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             fps = int(cap.get(cv2.CAP_PROP_FPS))
@@ -77,26 +126,21 @@ if uploaded_file is not None:
             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             cap.release()
             
-            # Create output directory
             output_dir = Path("output")
             output_dir.mkdir(exist_ok=True)
             output_path = output_dir / "detected_video.mp4"
             
-            # Remove old output if exists
             if output_path.exists():
                 os.remove(output_path)
             
-            # Setup video writer with H264 codec (more compatible)
-            fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H264 codec
+            fourcc = cv2.VideoWriter_fourcc(*'avc1')  
             out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
             
-            # Check if video writer opened successfully
             if not out.isOpened():
                 st.error("Failed to create video writer. Trying alternative codec...")
                 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
                 out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
             
-            # Process video frame by frame
             cap = cv2.VideoCapture(temp_file_path)
             frame_count = 0
             
@@ -105,21 +149,17 @@ if uploaded_file is not None:
                 if not ret:
                     break
                 
-                # Run detection on frame
                 results = model(frame, verbose=False)
                 
-                # Plot results on frame
                 annotated_frame = results[0].plot()
                 
-                # Write frame
                 out.write(annotated_frame)
                 
-                # Update progress
                 frame_count += 1
-                if frame_count % 10 == 0:  # Update every 10 frames for performance
+                if frame_count % 10 == 0:  
                     progress = frame_count / total_frames
                     progress_bar.progress(progress)
-                    status_text.text(f"Processing frame {frame_count}/{total_frames}")
+                    status_text.text(t["processing_frame"].format(frame_count, total_frames))
             
             cap.release()
             out.release()
@@ -127,36 +167,32 @@ if uploaded_file is not None:
             progress_bar.empty()
             status_text.empty()
             
-            # Verify output file exists and has content
             if output_path.exists() and output_path.stat().st_size > 0:
-                st.subheader("Detection Results")
-                st.success(f"✅ Processed {frame_count} frames!")
+                st.subheader(t["detection_results"])
+                st.success(t["processed_frames"].format(frame_count))
                 
-                # Read and display video
                 with open(output_path, 'rb') as video_file:
                     video_bytes = video_file.read()
                     st.video(video_bytes)
                 
-                # Provide download button
                 st.download_button(
-                    label="📥 Download Processed Video",
+                    label=t["download_button"],
                     data=video_bytes,
                     file_name="detected_video.mp4",
                     mime="video/mp4"
                 )
             else:
-                st.error("❌ Failed to create output video. The file is empty or doesn't exist.")
-                st.info(f"Output path: {output_path}")
-                st.info(f"File exists: {output_path.exists()}")
+                st.error(t["error_video"])
+                st.info(t["output_path"].format(output_path))
+                st.info(t["file_exists"].format(output_path.exists()))
                 if output_path.exists():
-                    st.info(f"File size: {output_path.stat().st_size} bytes")
+                    st.info(t["file_size"].format(output_path.stat().st_size))
             
         except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
+            st.error(t["error_occurred"].format(str(e)))
             import traceback
             st.code(traceback.format_exc())
             
         finally:
-            # Clean up temporary file
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
