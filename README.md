@@ -1,4 +1,4 @@
-# YOLOv10 Object Detection Web App 🎯
+# YOLOv10 Object Detection Web App
 
 [English](#english) | [Français](#français)
 
@@ -7,7 +7,7 @@
 ## English
 
 ### 🚀 Live Demo
-[**Try it now on Streamlit Cloud!**](https://mouad-baaziz-yolov10-object-detection-app.streamlit.app/)
+[**Try it now!**](https://mouad-baaziz-yolov10-object-detection-app.streamlit.app/)
 
 ### 📝 Description
 A web app for real-time object detection using YOLOv10. Upload images or videos and get instant detection results.
@@ -20,15 +20,9 @@ A web app for real-time object detection using YOLOv10. Upload images or videos 
 
 ### 🛠️ Technologies Used
 - **Streamlit**: Web application framework
-- **YOLOv10**: State-of-the-art object detection model
+- **YOLOv10**: Object detection model
 - **OpenCV**: Image and video processing
 - **Python**: Backend programming
-
-### 📦 Installation
-
-#### Prerequisites
-- Python 3.8 or higher
-- pip package manager
 
 #### Local Setup
 1. Clone the repository:
@@ -62,7 +56,7 @@ numpy
 ## Français
 
 ### 🚀 Démo en Direct
-[**Essayez maintenant sur Streamlit Cloud !**](https://mouad-baaziz-yolov10-object-detection-app.streamlit.app/)
+[**Essayez maintenant!**](https://mouad-baaziz-yolov10-object-detection-app.streamlit.app/)
 
 ### 📝 Description
 Une application web pour la détection d'objets en temps réel utilisant YOLOv10. Téléchargez des images ou des vidéos et obtenez instantanément des résultats de détection.
@@ -75,18 +69,12 @@ Une application web pour la détection d'objets en temps réel utilisant YOLOv10
 
 ### 🛠️ Technologies Utilisées
 - **Streamlit**: Framework d'application web
-- **YOLOv10**: Modèle de détection d'objets de pointe
+- **YOLOv10**: Modèle de détection d'objets
 - **OpenCV**: Traitement d'images et de vidéos
 - **Python**: Programmation backend
 
-### 📦 Installation
-
-#### Prérequis
-- Python 3.8 ou supérieur
-- Gestionnaire de paquets pip
-
 #### Configuration Locale
-1. Clonez le dépôt :
+1. Clonez :
 ```bash
 git clone https://github.com/Mouad-Baaziz/yolov10-object-detection-streamlit.git
 cd yolov10-object-detection-streamlit
